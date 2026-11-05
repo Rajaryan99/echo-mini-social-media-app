@@ -101,7 +101,7 @@ export default function Feed() {
       <Navbar />
 
       <main className="mx-auto max-w-[700px] px-4 py-8">
-        <form onSubmit={handleCreatePost} className="mb-8 rounded-[10px] border border-slate-200 bg-[#f6f6f5] p-3">
+        <form id="feed-post-form" onSubmit={handleCreatePost} className="mb-8 rounded-[10px] border border-slate-200 bg-[#f6f6f5] p-3">
           <textarea
             value={newPost.content}
             onChange={(e) => setNewPost((prev) => ({ ...prev, content: e.target.value }))}
@@ -122,7 +122,16 @@ export default function Feed() {
             </label>
 
             <button
-              type="submit"
+              type="button"
+              onClick={() => {
+                if (!localStorage.getItem('echoToken')) {
+                  window.location.href = '/signup'
+                  return
+                }
+
+                const form = document.querySelector('#feed-post-form')
+                if (form) form.requestSubmit()
+              }}
               disabled={posting}
               className="rounded-md bg-[#1d73d6] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1867c2] disabled:opacity-60"
             >
