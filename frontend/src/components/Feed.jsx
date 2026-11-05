@@ -38,7 +38,7 @@ export default function Feed() {
 
     const token = localStorage.getItem('echoToken')
     if (!token) {
-      alert('Please log in first.')
+      window.location.href = '/signup'
       return
     }
 
@@ -126,7 +126,7 @@ export default function Feed() {
               disabled={posting}
               className="rounded-md bg-[#1d73d6] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1867c2] disabled:opacity-60"
             >
-              {posting ? 'Posting...' : 'Post'}
+              {posting ? 'Posting...' : localStorage.getItem('echoToken') ? 'Post' : 'Sign up to Post'}
             </button>
           </div>
 
