@@ -2,6 +2,8 @@ import { useState } from 'react'
 import axios from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
 
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
 export default function Signup() {
   const [form, setForm] = useState({
     username: '',
@@ -20,6 +22,12 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (!emailRegex.test(form.email.trim())) {
+      setError('Please enter a valid email address.')
+      return
+    }
+
     setLoading(true)
 
     try {
