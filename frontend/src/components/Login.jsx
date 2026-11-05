@@ -114,7 +114,7 @@ export default function Login() {
                 </div>
 
                 <div className="pt-1 text-center text-xs text-slate-400">
-                  End-to-end encrypted micro-course
+                  End-to-end encrypted 
                 </div>
               </div>
             </form>
