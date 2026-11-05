@@ -2,16 +2,11 @@ import { NavLink, useNavigate } from 'react-router-dom'
 
 export default function Navbar() {
   const navigate = useNavigate()
-  const isLoggedIn = Boolean(localStorage.getItem('echoToken'))
 
   const navItems = [
     { label: 'Feed', path: '/feed' },
-    ...(isLoggedIn
-      ? [
-          { label: 'My Posts', path: '/myposts' },
-          { label: 'Profile', path: '/profile' },
-        ]
-      : []),
+    { label: 'My Posts', path: '/myposts' },
+    { label: 'Profile', path: '/profile' },
   ]
 
   const handleLogout = () => {
@@ -37,15 +32,13 @@ export default function Navbar() {
           </NavLink>
         ))}
 
-        {isLoggedIn && (
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="text-slate-600 transition hover:text-slate-800"
-          >
-            Logout
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="text-slate-600 transition hover:text-slate-800"
+        >
+          Logout
+        </button>
       </nav>
     </header>
   )
