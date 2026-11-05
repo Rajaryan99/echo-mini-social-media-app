@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Navbar from './Navbar'
 
+const BACKEND_URL = 'https://echo-mini-social-media-app.onrender.com'
+const getMediaUrl = (value) => {
+  if (!value) return ''
+  return value.startsWith('http') ? value : `${BACKEND_URL}${value}`
+}
+
 export default function Feed() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -151,7 +157,7 @@ export default function Feed() {
                     <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
                       {post.userId?.profilePicture ? (
                         <img
-                          src={`http://localhost:3000${post.userId.profilePicture}`}
+                          src={getMediaUrl(post.userId.profilePicture)}
                           alt={post.userId?.username || 'User'}
                           className="h-full w-full object-cover"
                         />
@@ -185,7 +191,7 @@ export default function Feed() {
 
                 {post.imageUrl && (
                   <img
-                    src={`http://localhost:3000${post.imageUrl}`}
+                    src={getMediaUrl(post.imageUrl)}
                     alt="Post visual"
                     className="h-[260px] w-full rounded-lg object-cover"
                   />

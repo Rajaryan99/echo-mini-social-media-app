@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Navbar from './Navbar'
 
+const BACKEND_URL = 'https://echo-mini-social-media-app.onrender.com'
+const getMediaUrl = (value) => {
+  if (!value) return ''
+  return value.startsWith('http') ? value : `${BACKEND_URL}${value}`
+}
+
 export default function Profile() {
   const [user, setUser] = useState({
     username: '',
@@ -64,14 +70,16 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f3f2] px-4 py-8 md:px-8">
-        <Navbar/>
-      <div className="mx-auto max-w-[760px] rounded-[16px] border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col items-center justify-center">
+    <div className="mx-auto min-h-screen max-w-[1100px] rounded-[18px] border border-indigo-500/80 bg-[#f2f2f2] shadow-[0_0_0_2px_rgba(67,56,202,0.5)]">
+      <Navbar />
+
+      <main className="mx-auto max-w-[700px] px-4 py-8">
+        <div className="rounded-[16px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col items-center justify-center">
           <div className="mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-slate-300 bg-slate-100 text-xl font-semibold text-slate-700">
             {user.profilePicture ? (
               <img
-                src={`http://localhost:3000${user.profilePicture}`}
+                src={getMediaUrl(user.profilePicture)}
                 alt="Profile"
                 className="h-full w-full object-cover"
               />
@@ -94,28 +102,29 @@ export default function Profile() {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
 
-        <div className="mx-auto mt-8 w-full max-w-[500px] space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Username</label>
-            <input
-              type="text"
-              value={user.username}
-              readOnly
-              className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none"
-            />
-          </div>
+          <div className="mx-auto mt-8 w-full max-w-[500px] space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Username</label>
+              <input
+                type="text"
+                value={user.username}
+                readOnly
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none"
+              />
+            </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
-            <input
-              type="email"
-              value={user.email}
-              readOnly
-              className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none"
-            />
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+              <input
+                type="email"
+                value={user.email}
+                readOnly
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
