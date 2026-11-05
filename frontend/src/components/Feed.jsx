@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import Navbar from './Navbar'
 
@@ -9,6 +10,7 @@ const getMediaUrl = (value) => {
 }
 
 export default function Feed() {
+  const navigate = useNavigate()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [newPost, setNewPost] = useState({ content: '' })
@@ -17,6 +19,7 @@ export default function Feed() {
   const [deletingId, setDeletingId] = useState(null)
 
   const currentUser = JSON.parse(localStorage.getItem('echoUser') || '{}')
+  const isLoggedIn = Boolean(localStorage.getItem('echoToken'))
 
   const fetchPosts = async () => {
     try {
@@ -38,7 +41,7 @@ export default function Feed() {
 
     const token = localStorage.getItem('echoToken')
     if (!token) {
-      window.location.href = '/signup'
+      navigate('/signup')
       return
     }
 
@@ -124,8 +127,8 @@ export default function Feed() {
             <button
               type="button"
               onClick={() => {
-                if (!localStorage.getItem('echoToken')) {
-                  window.location.href = '/signup'
+                if (!isLoggedIn) {
+                  navigate('/signup')
                   return
                 }
 
@@ -135,7 +138,7 @@ export default function Feed() {
               disabled={posting}
               className="rounded-md bg-[#1d73d6] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1867c2] disabled:opacity-60"
             >
-              {posting ? 'Posting...' : localStorage.getItem('echoToken') ? 'Post' : 'Sign up to Post'}
+              {posting ? 'Posting...' : isLoggedIn ? 'Post' : 'Sign up to Post'}
             </button>
           </div>
 
