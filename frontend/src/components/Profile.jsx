@@ -13,12 +13,15 @@ export default function Profile() {
     username: '',
     email: '',
     profilePicture: '',
+    followers: [],
+    following: [],
   })
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const savedUser = localStorage.getItem('echoUser')
+    const token = localStorage.getItem('echoToken')
 
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser)
@@ -26,8 +29,43 @@ export default function Profile() {
         username: parsedUser.username || '',
         email: parsedUser.email || '',
         profilePicture: parsedUser.profilePicture || '',
+        followers: parsedUser.followers || [],
+        following: parsedUser.following || [],
       })
     }
+
+    if (!token) return
+
+    axios
+      .get('/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(({ data }) => {
+        const me = data.user || data
+
+        setUser((prev) => ({
+          ...prev,
+          username: me.username || prev.username,
+          email: me.email || prev.email,
+          profilePicture: me.profilePicture || prev.profilePicture,
+          followers: me.followers || prev.followers,
+          following: me.following || prev.following,
+        }))
+
+        const saved = JSON.parse(localStorage.getItem('echoUser') || '{}')
+        localStorage.setItem(
+          'echoUser',
+          JSON.stringify({
+            ...saved,
+            ...me,
+            followers: me.followers || saved.followers || [],
+            following: me.following || saved.following || [],
+          })
+        )
+      })
+      .catch((err) => {
+        console.error('Failed to load profile stats:', err)
+      })
   }, [])
 
   const handleProfilePicUpload = async (event) => {
@@ -57,10 +95,17 @@ export default function Profile() {
       const updatedUser = {
         ...JSON.parse(localStorage.getItem('echoUser') || '{}'),
         profilePicture: data.profilePicture || '',
+        followers: data.followers || JSON.parse(localStorage.getItem('echoUser') || '{}').followers || [],
+        following: data.following || JSON.parse(localStorage.getItem('echoUser') || '{}').following || [],
       }
 
       localStorage.setItem('echoUser', JSON.stringify(updatedUser))
-      setUser((prev) => ({ ...prev, profilePicture: data.profilePicture || prev.profilePicture }))
+      setUser((prev) => ({
+        ...prev,
+        profilePicture: data.profilePicture || prev.profilePicture,
+        followers: data.followers || prev.followers,
+        following: data.following || prev.following,
+      }))
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to upload profile picture.')
     } finally {
@@ -103,6 +148,17 @@ export default function Profile() {
         </div>
 
           <div className="mx-auto mt-8 w-full max-w-[500px] space-y-4">
+            <div className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="text-center">
+                <div className="text-xl font-bold text-slate-900">{user.followers?.length || 0}</div>
+                <div className="text-xs text-slate-500">Followers</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-slate-900">{user.following?.length || 0}</div>
+                <div className="text-xs text-slate-500">Following</div>
+              </div>
+            </div>
+
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">Username</label>
               <input
