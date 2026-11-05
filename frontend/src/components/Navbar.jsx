@@ -2,12 +2,18 @@ import { NavLink, useNavigate } from 'react-router-dom'
 
 export default function Navbar() {
   const navigate = useNavigate()
+  const isLoggedIn = Boolean(localStorage.getItem('echoToken'))
 
-  const navItems = [
-    { label: 'Feed', path: '/feed' },
-    { label: 'My Posts', path: '/myposts' },
-    { label: 'Profile', path: '/profile' },
-  ]
+  const navItems = isLoggedIn
+    ? [
+        { label: 'Feed', path: '/feed' },
+        { label: 'My Posts', path: '/myposts' },
+        { label: 'Profile', path: '/profile' },
+      ]
+    : [
+        { label: 'Feed', path: '/feed' },
+        { label: 'Signup', path: '/signup' },
+      ]
 
   const handleLogout = () => {
     localStorage.removeItem('echoToken')
@@ -32,13 +38,15 @@ export default function Navbar() {
           </NavLink>
         ))}
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="text-slate-600 transition hover:text-slate-800"
-        >
-          Logout
-        </button>
+        {isLoggedIn && (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="text-slate-600 transition hover:text-slate-800"
+          >
+            Logout
+          </button>
+        )}
       </nav>
     </header>
   )
