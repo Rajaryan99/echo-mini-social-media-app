@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 const userSchema = new mongoose.Schema(
   {
@@ -23,31 +23,25 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 8,
     },
-
     bio: {
       type: String,
       maxlength: 160,
     },
     profilePicture: {
       type: String,
-      default: "",
+      default: '',
     },
   },
   { timestamps: true }
 );
 
-const hassedPassword = async function (password) {
-  const bcrypt = await import("bcrypt");
-  const saltRounds = 10;
-  return bcrypt.hash(password, saltRounds);
-};
-
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) {
+    return;
   }
-  this.password = await hassedPassword(this.password);
-  next();
+
+  const saltRounds = 10;
+  this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
-export const User = mongoose.model("User", userSchema);
+export const User = mongoose.model('User', userSchema);

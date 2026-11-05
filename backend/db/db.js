@@ -1,16 +1,19 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
- const connectDB = async () => {
-    try {
+const mongoURI = process.env.MOGNODB_URL || 'mongodb://127.0.0.1:27017/echo-mini-social-media-app';
 
-        const db = await mongoose.connect(process.env.MOGNODB_URL)
-        console.log('DB connected successfully!!')
-        
-    } catch (error) {
+const connectDB = async () => {
+  try {
+    await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 10000,
+    });
 
-        console.error('Error in connection DB', error)
-        
-    }
-}
+    console.log('DB connected successfully!!');
+  } catch (error) {
+    console.error('Error in connection DB');
+    console.error(error.message);
+    console.error('If you are using MongoDB Atlas, make sure your current IP is whitelisted in Atlas > Network Access.');
+  }
+};
 
 export default connectDB;
