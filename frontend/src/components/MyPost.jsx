@@ -15,8 +15,25 @@ export default function MyPost() {
   const [selectedImage, setSelectedImage] = useState(null)
   const [posting, setPosting] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [likeState, setLikeState] = useState({})
+  const [likeCounts, setLikeCounts] = useState({})
 
   const currentUser = JSON.parse(localStorage.getItem('echoUser') || '{}')
+  const currentUserId = currentUser?._id
+
+  const syncPostLikes = (items) => {
+    const nextLikeState = {}
+    const nextLikeCounts = {}
+
+    for (const post of items) {
+      const liked = post.likes?.some((user) => user?._id === currentUserId || user === currentUserId)
+      nextLikeState[post._id] = Boolean(liked)
+      nextLikeCounts[post._id] = post.likes?.length || 0
+    }
+
+    setLikeState(nextLikeState)
+    setLikeCounts(nextLikeCounts)
+  }
 
   const fetchUserPosts = async () => {
     const token = localStorage.getItem('echoToken')
@@ -32,6 +49,7 @@ export default function MyPost() {
         headers: { Authorization: `Bearer ${token}` },
       })
       setPosts(data)
+      syncPostLikes(data)
     } catch (error) {
       console.error('Failed to fetch posts:', error)
     } finally {
@@ -105,6 +123,28 @@ export default function MyPost() {
       alert(error.response?.data?.message || 'Unable to delete post.')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleToggleLike = async (postId) => {
+    const token = localStorage.getItem('echoToken')
+    if (!token) {
+      alert('Please log in first.')
+      return
+    }
+
+    try {
+      const { data } = await axios.post(
+        `/api/posts/${postId}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      setLikeState((prev) => ({ ...prev, [postId]: data.liked }))
+      setLikeCounts((prev) => ({ ...prev, [postId]: data.likesCount }))
+    } catch (error) {
+      console.error('Failed to toggle like:', error)
+      alert(error.response?.data?.message || 'Unable to update like.')
     }
   }
 
@@ -219,6 +259,20 @@ export default function MyPost() {
                     className="h-[260px] w-full rounded-lg object-cover"
                   />
                 )}
+
+                <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleLike(post._id)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                      likeState[post._id]
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {likeState[post._id] ? 'Unlike' : 'Like'} · {likeCounts[post._id] || 0}
+                  </button>
+                </div>
               </article>
             ))}
           </div>

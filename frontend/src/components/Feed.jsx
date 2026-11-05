@@ -17,14 +17,39 @@ export default function Feed() {
   const [selectedImage, setSelectedImage] = useState(null)
   const [posting, setPosting] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [likeState, setLikeState] = useState({})
+  const [likeCounts, setLikeCounts] = useState({})
+  const [followState, setFollowState] = useState({})
 
   const currentUser = JSON.parse(localStorage.getItem('echoUser') || '{}')
+  const currentUserId = currentUser?._id
   const isLoggedIn = Boolean(localStorage.getItem('echoToken'))
+
+  const syncPostInteractionState = (items) => {
+    const nextLikeState = {}
+    const nextLikeCounts = {}
+    const nextFollowState = {}
+
+    for (const post of items) {
+      const liked = post.likes?.some((user) => user?._id === currentUserId || user === currentUserId)
+      nextLikeState[post._id] = Boolean(liked)
+      nextLikeCounts[post._id] = post.likes?.length || 0
+
+      if (post.userId?._id && post.userId._id !== currentUserId) {
+        nextFollowState[post.userId._id] = post.userId.followers?.some((user) => user?._id === currentUserId || user === currentUserId) || false
+      }
+    }
+
+    setLikeState(nextLikeState)
+    setLikeCounts(nextLikeCounts)
+    setFollowState(nextFollowState)
+  }
 
   const fetchPosts = async () => {
     try {
       const { data } = await axios.get('/api/posts')
       setPosts(data)
+      syncPostInteractionState(data)
     } catch (error) {
       console.error('Failed to fetch posts:', error)
     } finally {
@@ -96,6 +121,49 @@ export default function Feed() {
       alert(error.response?.data?.message || 'Unable to delete post.')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleToggleLike = async (postId) => {
+    const token = localStorage.getItem('echoToken')
+    if (!token) {
+      navigate('/signup')
+      return
+    }
+
+    try {
+      const { data } = await axios.post(
+        `/api/posts/${postId}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      setLikeState((prev) => ({ ...prev, [postId]: data.liked }))
+      setLikeCounts((prev) => ({ ...prev, [postId]: data.likesCount }))
+    } catch (error) {
+      console.error('Failed to toggle like:', error)
+      alert(error.response?.data?.message || 'Unable to update like.')
+    }
+  }
+
+  const handleToggleFollow = async (userId) => {
+    const token = localStorage.getItem('echoToken')
+    if (!token) {
+      navigate('/signup')
+      return
+    }
+
+    try {
+      const { data } = await axios.post(
+        `/api/users/${userId}/follow`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      setFollowState((prev) => ({ ...prev, [userId]: data.isFollowing }))
+    } catch (error) {
+      console.error('Failed to toggle follow:', error)
+      alert(error.response?.data?.message || 'Unable to update follow.')
     }
   }
 
@@ -187,16 +255,28 @@ export default function Feed() {
                     </div>
                   </div>
 
-                  {(post.userId?._id === currentUser._id || post.userId === currentUser._id) && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeletePost(post._id)}
-                      disabled={deletingId === post._id}
-                      className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-60"
-                    >
-                      {deletingId === post._id ? 'Deleting...' : 'Delete'}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {post.userId?._id && post.userId._id !== currentUserId && (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFollow(post.userId._id)}
+                        className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100"
+                      >
+                        {followState[post.userId._id] ? 'Following' : 'Follow'}
+                      </button>
+                    )}
+
+                    {(post.userId?._id === currentUser._id || post.userId === currentUser._id) && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePost(post._id)}
+                        disabled={deletingId === post._id}
+                        className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+                      >
+                        {deletingId === post._id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <p className="mb-4 text-[15px] leading-6 text-slate-700">{post.content}</p>
@@ -208,6 +288,20 @@ export default function Feed() {
                     className="h-[260px] w-full rounded-lg object-cover"
                   />
                 )}
+
+                <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleLike(post._id)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                      likeState[post._id]
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {likeState[post._id] ? 'Unlike' : 'Like'} · {likeCounts[post._id] || 0}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
