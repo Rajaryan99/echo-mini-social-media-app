@@ -38,7 +38,8 @@ router.get('/', async (req, res) => {
   try {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate('userId', 'username bio profilePicture');
+      .populate('userId', 'username bio profilePicture followers following')
+      .populate('likes', 'username profilePicture');
 
     res.json(posts);
   } catch (error) {
@@ -50,7 +51,8 @@ router.get('/user/:userId', async (req, res) => {
   try {
     const posts = await Post.find({ userId: req.params.userId })
       .sort({ createdAt: -1 })
-      .populate('userId', 'username bio profilePicture');
+      .populate('userId', 'username bio profilePicture followers following')
+      .populate('likes', 'username profilePicture');
 
     res.json(posts);
   } catch (error) {
@@ -70,10 +72,13 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       userId: req.user._id,
       content: content?.trim() || '',
       imageUrl: req.file ? `/uploads/posts/${req.file.filename}` : imageUrl || '',
+      likes: [],
     });
 
     const savedPost = await newPost.save();
-    const populatedPost = await Post.findById(savedPost._id).populate('userId', 'username bio profilePicture');
+    const populatedPost = await Post.findById(savedPost._id)
+      .populate('userId', 'username bio profilePicture followers following')
+      .populate('likes', 'username profilePicture');
 
     res.status(201).json(populatedPost);
   } catch (error) {
@@ -106,11 +111,42 @@ router.patch('/:id', authMiddleware, upload.single('image'), async (req, res) =>
     }
 
     const updatedPost = await post.save();
-    const populatedPost = await Post.findById(updatedPost._id).populate('userId', 'username bio profilePicture');
+    const populatedPost = await Post.findById(updatedPost._id)
+      .populate('userId', 'username bio profilePicture followers following')
+      .populate('likes', 'username profilePicture');
 
     res.json(populatedPost);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+router.post('/:id/like', authMiddleware, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found.' });
+    }
+
+    const userId = req.user._id.toString();
+    const alreadyLiked = post.likes.some((id) => id.toString() === userId);
+
+    if (alreadyLiked) {
+      post.likes = post.likes.filter((id) => id.toString() !== userId);
+    } else {
+      post.likes.push(req.user._id);
+    }
+
+    await post.save();
+
+    res.json({
+      liked: !alreadyLiked,
+      likesCount: post.likes.length,
+      postId: post._id,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

@@ -56,8 +56,10 @@ const getUser = async (req, res, next) => {
   next();
 };
 
-router.get('/me', authMiddleware, (req, res) => {
-  res.json({ user: req.user });
+router.get('/me', authMiddleware, async (req, res) => {
+  const user = await User.findById(req.user._id).select('-password').populate('followers', 'username profilePicture').populate('following', 'username profilePicture');
+
+  res.json({ user });
 });
 
 router.patch('/me/profile', authMiddleware, profileUpload.single('profilePicture'), async (req, res) => {
@@ -97,8 +99,48 @@ router.get('/username/:username', async (req, res) => {
   }
 });
 
-router.get('/:id', getUser, (req, res) => {
-  res.json(res.user);
+router.post('/:id/follow', authMiddleware, async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    const currentUserId = req.user._id;
+
+    if (targetUserId === currentUserId.toString()) {
+      return res.status(400).json({ message: 'You cannot follow yourself.' });
+    }
+
+    const targetUser = await User.findById(targetUserId);
+    const currentUser = await User.findById(currentUserId);
+
+    if (!targetUser || !currentUser) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const isFollowing = currentUser.following.some((id) => id.toString() === targetUserId);
+
+    if (isFollowing) {
+      currentUser.following = currentUser.following.filter((id) => id.toString() !== targetUserId);
+      targetUser.followers = targetUser.followers.filter((id) => id.toString() !== currentUserId.toString());
+    } else {
+      currentUser.following.push(targetUser._id);
+      targetUser.followers.push(currentUser._id);
+    }
+
+    await currentUser.save();
+    await targetUser.save();
+
+    res.json({
+      isFollowing: !isFollowing,
+      followersCount: targetUser.followers.length,
+      followingCount: currentUser.following.length,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get('/:id', getUser, async (req, res) => {
+  const user = await User.findById(req.params.id).select('-password').populate('followers', 'username profilePicture').populate('following', 'username profilePicture');
+  res.json(user);
 });
 
 router.post('/register', async (req, res) => {
