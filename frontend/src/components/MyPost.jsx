@@ -279,7 +279,7 @@ export default function MyPost() {
         )}
 
         <div className="mt-8 border-t border-slate-200 pt-5 text-center text-xs text-slate-500">
-          Echo Platform · Focused micro-publishing
+          Echo Mini Social Media App 
         </div>
       </main>
     </div>
